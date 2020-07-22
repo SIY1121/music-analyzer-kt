@@ -1,12 +1,13 @@
 package space.siy.music_analyzer_kt
 
 import uk.me.berndporr.iirj.Butterworth
+import kotlin.math.abs
 
 class MusicAnalyzer(val samples: ShortArray, val sampleRate: Int) {
     private val highPassedSamples = ShortArray(samples.size)
     private val lowPassedSamples = ShortArray(samples.size)
 
-    data class Result(val tempo: Int, val events: List<Event>)
+    data class Result(val tempo: Int, val events: List<Event>,val maxVolume: Float)
 
     fun analyze(): Result {
         prepareSamples()
@@ -14,7 +15,8 @@ class MusicAnalyzer(val samples: ShortArray, val sampleRate: Int) {
             .toShortArray()
         val tempo = TempoDetector.estimate(mixed, sampleRate)
         val events = EventDetector.detect(samples, lowPassedSamples, sampleRate, tempo.tempo)
-        return Result(tempo.tempo, events)
+        val maxVolume = abs((samples.maxBy { abs(it.toInt()) } ?: 0) / Short.MAX_VALUE.toFloat())
+        return Result(tempo.tempo, events, maxVolume)
     }
 
     /**
